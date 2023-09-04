@@ -1,0 +1,4 @@
+---
+dns_entries:
+  - { ip: "172.24.61.215", name: "cpe-factory" }
+  - { ip: "172.24.61.213", name: "print-server" }

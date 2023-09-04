@@ -1,0 +1,44 @@
+---
+- name: Copy provision source code file 
+  copy:
+    src: /home/may/Documents/work/project/ansible_project/Poetry_Ansible/roles/provision/files/pcf-0.1.0.tar.gz
+    dest: /home/frontiir/pcf-0.1.0.tar.gz
+
+- name: Extract Provision file
+  unarchive:
+    src: /home/frontiir/pcf-0.1.0.tar.gz
+    dest: /home/frontiir/
+    remote_src: yes
+
+- name: Set Permissions
+  file:
+    path: "/home/frontiir/pcf-0.1.0"
+    mode: "777"
+
+- name: Set owner and group
+  file:
+    path: "/home/frontiir/pcf-0.1.0""
+    owner: frontiir
+    group: frontiir
+
+- name: Remove zip file
+  file:
+    path: /home/frontiir/pcf-0.1.0.tar.gz
+    state: absent
+
+- name: Copy package wheel file 
+  copy:
+    src: /home/may/Documents/work/project/ansible_project/Poetry_Ansible/roles/provision/files/pcf-0.1.0-py3-none-any.whl
+    dest: /home/frontiir/pcf-0.1.0/
+
+- name: Packages Install with Pip
+  shell: |
+    cd /home/frontiir/pcf-0.1.0
+    python3.8 -m pip install pcf-0.1.0-py3-none-any.whl
+
+- name: Set .venv owner and group
+  file:
+    path: "/home/frontiir/pcf-0.1.0/.venv"
+    owner: frontiir
+    group: frontiir
+

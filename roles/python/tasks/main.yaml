@@ -1,0 +1,38 @@
+---
+- name: Copy Python-3.8.6.tgz file 
+  copy:
+    src: Python-3.10.9.tgz
+    dest: /tmp/Python-3.8.6.tgz
+
+- name: Extract Python-3.8.6.tgz
+  unarchive:
+    src: /tmp/Python-3.8.6.tgz
+    dest: /tmp
+    remote_src: yes
+  become: true
+ 
+- name: Set owner and group
+  file:
+    path: /tmp/Python-3.8.6
+    owner: root
+    group: root
+    recurse: yes
+    state: directory
+    follow: yes
+  become: true
+
+- name: Set Permissions 
+  file:
+    path: /tmp/Python-3.8.6
+    mode: 777
+    recurse: yes
+    follow: yes
+  become: true
+
+- name: Configure and Compile Python3.8
+  shell: |
+    cd /tmp/Python-3.8.6
+    ./configure --enable-optimizations --with-ensurepip=install
+    make -j 8
+    make altinstall
+  become: true 
