@@ -1,7 +1,7 @@
 ---
 - name: Copy Python-3.8.6.tgz file 
   copy:
-    src: Python-3.10.9.tgz
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/python/files/Python-3.8.6.tgz
     dest: /tmp/Python-3.8.6.tgz
 
 - name: Extract Python-3.8.6.tgz

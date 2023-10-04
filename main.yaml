@@ -6,8 +6,9 @@
   vars_files:
     - vars.yml
   roles:
-    - { role: apt }
-    - { role: python }
+    # - { role: apt }
+    # - { role: python }
     - { role: provision }
-    - { role: terminal_setup }
-    - { role: socketio }
+    # - { role: terminal_setup }
+    # - { role: pt_agent_client }
+    # - { role: systemd_service }

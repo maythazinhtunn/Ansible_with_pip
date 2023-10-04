@@ -1,0 +1,15 @@
+[Unit]
+Description=Provisioning CPE Agent SocketIO Client
+After=network.target
+
+[Service]
+WorkingDirectory=/home/frontiir/pt_agent
+ExecStart=/home/frontiir/pt_agent/client.sh
+ExecReload=/usr/bin/kill -s HUP $MAINPID
+ExecStop=/usr/bin/kill -s TERM $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+

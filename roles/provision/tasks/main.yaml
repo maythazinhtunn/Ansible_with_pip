@@ -1,44 +1,120 @@
 ---
 - name: Copy provision source code file 
   copy:
-    src: /home/may/Documents/work/project/ansible_project/Poetry_Ansible/roles/provision/files/pcf-0.1.0.tar.gz
-    dest: /home/frontiir/pcf-0.1.0.tar.gz
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/provision/files/pcf-v0.1.0.tar
+    dest: /home/frontiir/pcf/
 
 - name: Extract Provision file
   unarchive:
-    src: /home/frontiir/pcf-0.1.0.tar.gz
-    dest: /home/frontiir/
+    src: /home/frontiir/pcf/pcf-v0.1.0.tar
+    dest: /home/frontiir/pcf/
     remote_src: yes
 
 - name: Set Permissions
   file:
-    path: "/home/frontiir/pcf-0.1.0"
-    mode: "777"
+    path: "/home/frontiir/pcf/"
+    mode: "0755"
+    recurse: yes
 
 - name: Set owner and group
   file:
-    path: "/home/frontiir/pcf-0.1.0""
+    path: "/home/frontiir/pcf"
     owner: frontiir
-    group: frontiir
+    group: frontiir 
+    recurse: yes
 
 - name: Remove zip file
   file:
-    path: /home/frontiir/pcf-0.1.0.tar.gz
+    path: /home/frontiir/pcf/pcf-v0.1.0.tar
     state: absent
 
-- name: Copy package wheel file 
-  copy:
-    src: /home/may/Documents/work/project/ansible_project/Poetry_Ansible/roles/provision/files/pcf-0.1.0-py3-none-any.whl
-    dest: /home/frontiir/pcf-0.1.0/
-
-- name: Packages Install with Pip
+- name: Create Python virtual environment
   shell: |
-    cd /home/frontiir/pcf-0.1.0
-    python3.8 -m pip install pcf-0.1.0-py3-none-any.whl
+    cd /home/frontiir/pcf/
+    python3.8 -m venv .venv
+
+- name: Activate Python virtual environment and install the package
+  shell: |
+    /home/frontiir/pcf/.venv/bin/python3.8 -m pip install /home/frontiir/pcf/wheels/*.whl
+  become: true
+  register: install_result  # Capture the result of the installation
+
+- name: Display installation output (for debugging)
+  debug:
+    var: install_result.stdout_lines
+  when: install_result.stdout_lines is defined and install_result.stdout_lines | length > 0
+
+- name: Remove dist file
+  file:
+    path: /home/frontiir/pcf/wheels/
+    state: absent
 
 - name: Set .venv owner and group
   file:
-    path: "/home/frontiir/pcf-0.1.0/.venv"
+    path: "/home/frontiir/pcf/.venv"
     owner: frontiir
     group: frontiir
+    recurse: yes
 
+- name: Set Permissions for venv 
+  file:
+    path: "/home/frontiir/pcf/.venv"
+    mode: "0775"
+
+- name: Copy .env template
+  template:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/provision/files/envfile
+    dest: /home/frontiir/pcf/.env  # Specify the destination path here
+
+- name: Set Permissions for env 
+  file:
+    path: "/home/frontiir/pcf/.env"
+    mode: "0664"
+
+- name: Create the bash script file
+  copy:
+    content: |
+      #!/usr/bin/env bash
+
+      cd /home/frontiir/pcf/
+      source .venv/bin/activate
+      provision-ctl detect
+      model=$(poetry run provision-ctl detect | grep 'model' | awk '{print $11}' | sed 's/["\,]//g')
+      if [ ! -z "$model" ]; then
+        provision-ctl provision $model
+      else
+        echo "cpe model doesn't exit"
+      fi
+      deactivate
+
+    dest: /home/frontiir/pcf/PROVISION.sh 
+    owner: frontiir
+    group: frontiir
+    mode: '0775'  # This sets the mode to +x
+
+- name: Copy er-x-sfp config file
+  template:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/provision/files/er-x-sfp.config.20230906.boot
+    dest: /home/frontiir/edgerouter/config/
+
+- name: Copy er-x config file
+  template:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/provision/files/er-x.config.20230906.boot
+    dest: /home/frontiir/edgerouter/config/
+
+- name: Copy hook file
+  template:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/provision/files/rfc3442-classless-routes
+    dest: /home/frontiir/edgerouter/hooks/
+
+- name: Copy template.j2 file
+  template:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/provision/files/template.j2
+    dest: /home/frontiir/edgerouter/config/
+  notify:
+    - Restart Service
+
+- name: Create edgerouter interface folder
+  file:
+    path: /home/frontiir/edgerouter/interface/  # Specify the desired folder path
+    state: directory  # This ensures the folder is created

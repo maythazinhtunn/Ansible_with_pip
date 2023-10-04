@@ -1,0 +1,15 @@
+host-name {{ host_name }}
+login {
+    user operations1 {
+        authentication {
+            plaintext-password "{{ password1 }}"
+        }
+        level admin
+    }
+    user operations {
+        authentication {
+            plaintext-password "{{ password2 }}"
+        }
+        level admin
+    }
+}

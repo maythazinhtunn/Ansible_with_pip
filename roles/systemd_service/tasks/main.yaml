@@ -1,0 +1,14 @@
+---
+- name: Copy the systemd service file
+  copy:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/systemd_service/files/pt-agent.service  # Path to your systemd service file
+    dest: /etc/systemd/system/
+  notify: Reload systemd  # Trigger systemd reload if the service file changes
+  become: true
+
+- name: Reload systemd
+  shell: |
+    systemctl daemon-reload
+    systemctl start pt-agent.service
+    systemctl enable pt-agent.service
+  become: true

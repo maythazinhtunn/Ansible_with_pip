@@ -1,0 +1,89 @@
+---
+- name: Copy pt_agent_client tar file
+  copy:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/pt_agent_client/files/pt_agent-0.1.0.tar
+    dest: /home/frontiir/pt_agent/
+
+- name: Extract pt_agent_client tar file
+  unarchive:
+    src: /home/frontiir/pt_agent/pt_agent-0.1.0.tar
+    dest: /home/frontiir/pt_agent/
+    remote_src: yes
+
+- name: Set Permissions
+  file:
+    path: "/home/frontiir/pt_agent/"
+    mode: "0755"
+    recurse: yes
+
+- name: Set owner and group
+  file:
+    path: "/home/frontiir/pt_agent/"
+    owner: frontiir
+    group: frontiir
+    recurse: yes
+
+- name: Remove zip file
+  file:
+    path: /home/frontiir/pt_agent/pt_agent-0.1.0.tar
+    state: absent
+
+- name: Create Python virtual environment for pt_agent
+  shell: |
+    cd /home/frontiir/pt_agent/
+    python3.8 -m venv .venv
+  become: false
+
+- name: Activate Python virtual environment and install the package for pt_agent
+  shell: |
+    /home/frontiir/pt_agent/.venv/bin/python -m pip install /home/frontiir/pt_agent/dist/*.whl
+  become: true
+  register: install_result  # Capture the result of the installation
+
+- name: Display installation output (for debugging)
+  debug:
+    var: install_result.stdout_lines
+  when: install_result.stdout_lines is defined and install_result.stdout_lines | length > 0
+
+- name: Set .venv owner and group
+  file:
+    path: "/home/frontiir/pt_agent/.venv"
+    owner: frontiir
+    group: frontiir
+    recurse: yes
+
+- name: Set Permissions for venv 
+  file:
+    path: "/home/frontiir/pt_agent/.venv"
+    mode: "0775"
+
+- name: Copy .env template
+  template:
+    src: /home/may/Documents/work/project/ansible_project/Pip_Ansible/roles/pt_agent_client/files/envfile
+    dest: /home/frontiir/pt_agent/.env  # Specify the destination path here
+
+- name: Set Permissions for env 
+  file:
+    path: "/home/frontiir/pt_agent/.env"
+    mode: "0664"
+
+- name: Create the bash script file
+  copy:
+    content: |
+      #!/usr/bin/env bash
+
+      cd /home/frontiir/pt_agent/
+      source .venv/bin/activate
+      pt-client
+      deactivate
+
+    dest: /home/frontiir/pt_agent/client.sh
+    owner: frontiir
+    group: frontiir
+    mode: '0775'  # This sets the mode to +x
+
+- name: Remove dist file
+  file:
+    path: /home/frontiir/pt_agent/dist/
+    state: absent
+
